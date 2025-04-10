@@ -4,24 +4,34 @@ const localStorage = require('../utils/localStorage');
 
 // GET wishlist items
 router.get('/:userId', (req, res) => {
-  const wishlist = localStorage.getById('wishlists', req.params.userId) || [];
-  res.json(wishlist);
+  let wishlist = localStorage.getById('wishlists', req.params.userId);
+  if (!wishlist) {
+    wishlist = { items: [] };
+    localStorage.update('wishlists', req.params.userId, wishlist);
+  }
+  res.json(wishlist.items || []);
 });
 
 // POST add item to wishlist
 router.post('/:userId/add', (req, res) => {
   let wishlist = localStorage.getById('wishlists', req.params.userId);
   if (!wishlist) {
-    wishlist = [];
+    wishlist = { items: [] };
   }
   
-  const newItem = req.body;
-  const existingItemIndex = wishlist.findIndex(item => item.id === newItem.id);
+  const { id, name, price, description } = req.body;
+  
+  if (!id || !name || price === undefined) {
+    return res.status(400).json({ message: 'Invalid product data. Required fields: id, name, price' });
+  }
+
+  const newItem = { id, name, price, description };
+  const existingItemIndex = wishlist.items ? wishlist.items.findIndex(item => item.id === id) : -1;
   
   if (existingItemIndex === -1) {
-    wishlist.push(newItem);
+    wishlist.items = [...(wishlist.items || []), newItem];
     localStorage.update('wishlists', req.params.userId, wishlist);
-    res.status(201).json(wishlist);
+    res.status(201).json(wishlist.items);
   } else {
     res.status(400).json({ message: 'Item already in wishlist' });
   }
@@ -30,15 +40,15 @@ router.post('/:userId/add', (req, res) => {
 // DELETE remove item from wishlist
 router.delete('/:userId/remove/:productId', (req, res) => {
   let wishlist = localStorage.getById('wishlists', req.params.userId);
-  if (!wishlist) {
+  if (!wishlist || !wishlist.items) {
     return res.status(404).json({ message: 'Wishlist not found' });
   }
   
-  const itemIndex = wishlist.findIndex(item => item.id === req.params.productId);
+  const itemIndex = wishlist.items.findIndex(item => item.id === req.params.productId);
   if (itemIndex > -1) {
-    wishlist.splice(itemIndex, 1);
+    wishlist.items.splice(itemIndex, 1);
     localStorage.update('wishlists', req.params.userId, wishlist);
-    res.json(wishlist);
+    res.json(wishlist.items);
   } else {
     res.status(404).json({ message: 'Item not found in wishlist' });
   }

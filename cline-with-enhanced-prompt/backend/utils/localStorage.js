@@ -8,7 +8,8 @@ const initialData = {
   products: [],
   users: [],
   carts: {},
-  wishlists: {}
+  wishlists: {},
+  orders: []
 };
 
 // Load data from file or create new file if it doesn't exist
@@ -39,12 +40,20 @@ function saveData(data) {
 // Get all items from a collection
 function getAll(collection) {
   const data = loadData();
+  if (!data[collection]) {
+    data[collection] = collection === 'carts' || collection === 'wishlists' ? {} : [];
+    saveData(data);
+  }
   return data[collection] || [];
 }
 
 // Get a single item by id from a collection
 function getById(collection, id) {
   const data = loadData();
+  if (!data[collection]) {
+    data[collection] = collection === 'carts' || collection === 'wishlists' ? {} : [];
+    saveData(data);
+  }
   if (collection === 'carts' || collection === 'wishlists') {
     return data[collection][id];
   }
@@ -54,6 +63,9 @@ function getById(collection, id) {
 // Add an item to a collection
 function add(collection, item) {
   const data = loadData();
+  if (!data[collection]) {
+    data[collection] = collection === 'carts' || collection === 'wishlists' ? {} : [];
+  }
   if (collection === 'carts' || collection === 'wishlists') {
     data[collection][item.id] = item;
   } else {
@@ -66,6 +78,9 @@ function add(collection, item) {
 // Update an item in a collection
 function update(collection, id, updatedItem) {
   const data = loadData();
+  if (!data[collection]) {
+    data[collection] = collection === 'carts' || collection === 'wishlists' ? {} : [];
+  }
   if (collection === 'carts' || collection === 'wishlists') {
     data[collection][id] = { ...data[collection][id], ...updatedItem };
     saveData(data);
@@ -84,6 +99,11 @@ function update(collection, id, updatedItem) {
 // Remove an item from a collection
 function remove(collection, id) {
   const data = loadData();
+  if (!data[collection]) {
+    data[collection] = collection === 'carts' || collection === 'wishlists' ? {} : [];
+    saveData(data);
+    return null;
+  }
   if (collection === 'carts' || collection === 'wishlists') {
     const removedItem = data[collection][id];
     delete data[collection][id];

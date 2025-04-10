@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '../../components/Layout';
-import { AppProvider, useAppContext } from '../../lib/AppContext';
+import { useAppContext } from '../../lib/AppContext';
 import { placeOrder } from '../../lib/api';
 
-const CheckoutPageContent: React.FC = () => {
-  const { cart, user, updateCartItemQuantity } = useAppContext();
+const CheckoutPage: React.FC = () => {
+  const { cart, user, removeFromCart } = useAppContext();
   const [address, setAddress] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
@@ -23,10 +23,10 @@ const CheckoutPageContent: React.FC = () => {
     try {
       const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       await placeOrder(user.id, cart, address, total);
-      alert('Order placed successfully!');
+      alert('Order placed successfully! Redirecting to your orders...');
       // Clear the cart
-      cart.forEach(item => updateCartItemQuantity(item.productId, 0));
-      router.push('/');
+      cart.forEach(item => removeFromCart(item.productId));
+      router.push('/orders');
     } catch (error) {
       console.error('Error placing order:', error);
       alert('Failed to place order. Please try again.');
@@ -65,11 +65,5 @@ const CheckoutPageContent: React.FC = () => {
     </Layout>
   );
 };
-
-const CheckoutPage: React.FC = () => (
-  <AppProvider>
-    <CheckoutPageContent />
-  </AppProvider>
-);
 
 export default CheckoutPage;

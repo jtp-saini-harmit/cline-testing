@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { login as apiLogin, register as apiRegister, logout as apiLogout, getUserInfo, fetchCart as apiFetchCart, fetchWishlist as apiFetchWishlist } from './api';
+import { 
+  login as apiLogin, 
+  register as apiRegister, 
+  logout as apiLogout, 
+  getUserInfo, 
+  fetchCart as apiFetchCart, 
+  fetchWishlist as apiFetchWishlist,
+  addToWishlist as apiAddToWishlist,
+  removeFromWishlist as apiRemoveFromWishlist
+} from './api';
 
 interface User {
   id: string;
@@ -33,6 +42,7 @@ interface AppContextType {
   updateCartItemQuantity: (productId: string, quantity: number) => void;
   addToWishlist: (item: WishlistItem) => void;
   removeFromWishlist: (productId: string) => void;
+  setWishlist: (wishlist: WishlistItem[] | ((prev: WishlistItem[]) => WishlistItem[])) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,8 +63,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return Promise.all([apiFetchCart(storedUserId), apiFetchWishlist(storedUserId)]);
         })
         .then(([cartData, wishlistData]) => {
-          setCart(cartData.items);
-          setWishlist(wishlistData);
+          setCart(cartData?.items || []);
+          setWishlist(wishlistData || []);
         })
         .catch((error) => {
           console.error('Error fetching user info, cart, or wishlist:', error);
@@ -73,8 +83,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         apiFetchCart(data.userId),
         apiFetchWishlist(data.userId)
       ]);
-      setCart(cartData.items);
-      setWishlist(wishlistData);
+      setCart(cartData?.items || []);
+      setWishlist(wishlistData || []);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -87,6 +97,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setUser({ id: data.userId, username: data.username });
       setIsLoggedIn(true);
       localStorage.setItem('userId', data.userId);
+      // Initialize cart and wishlist for new users
+      const [cartData, wishlistData] = await Promise.all([
+        apiFetchCart(data.userId),
+        apiFetchWishlist(data.userId)
+      ]);
+      setCart(cartData.items || []);
+      setWishlist(wishlistData || []);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -136,10 +153,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addToWishlist = async (item: WishlistItem) => {
     if (user) {
       try {
-        const updatedWishlist = await apiFetchWishlist(user.id);
-        setWishlist(updatedWishlist);
+        // Update local state immediately for better UX
+        setWishlist(prev => {
+          const existingItem = prev.find(i => i.id === item.id);
+          if (!existingItem) {
+            return [...prev, item];
+          }
+          return prev;
+        });
+
+        // Then sync with backend
+        await apiAddToWishlist(user.id, {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          description: item.description
+        });
       } catch (error) {
+        // Revert on error
         console.error('Error adding item to wishlist:', error);
+        setWishlist(prev => prev.filter(i => i.id !== item.id));
+        throw error;
       }
     }
   };
@@ -147,8 +181,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const removeFromWishlist = async (productId: string) => {
     if (user) {
       try {
-        const updatedWishlist = await apiFetchWishlist(user.id);
-        setWishlist(updatedWishlist);
+        await apiRemoveFromWishlist(user.id, productId);
+        setWishlist(prev => prev.filter(item => item.id !== productId));
       } catch (error) {
         console.error('Error removing item from wishlist:', error);
       }
@@ -170,6 +204,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateCartItemQuantity,
         addToWishlist,
         removeFromWishlist,
+        setWishlist,
       }}
     >
       {children}

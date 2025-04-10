@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { AppProvider, useAppContext } from '../lib/AppContext';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '../lib/AppContext';
+import { resetLocalStorage } from '../lib/api';
 import Auth from './Auth';
 import Cart from './Cart';
 import Wishlist from './Wishlist';
@@ -9,8 +11,23 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
-  const { isLoggedIn } = useAppContext();
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { isLoggedIn, logout, user } = useAppContext();
+  const router = useRouter();
+
+  const handleReset = async () => {
+    try {
+      await resetLocalStorage();
+      if (isLoggedIn) {
+        await logout();
+      }
+      router.refresh();
+      alert('Data reset successfully.');
+    } catch (error) {
+      console.error('Error resetting data:', error);
+      alert('Failed to reset data');
+    }
+  };
 
   return (
     <div className="container">
@@ -21,6 +38,9 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
         <nav>
           <Link href="/">Home</Link>
           {isLoggedIn && <Link href="/orders">Orders</Link>}
+          <button onClick={handleReset} style={{ marginLeft: '1rem' }}>
+            Reset Data
+          </button>
         </nav>
         <Auth />
       </header>
@@ -41,14 +61,6 @@ const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
         <p>&copy; 2025 Our Ecommerce Store. All rights reserved.</p>
       </footer>
     </div>
-  );
-};
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-  return (
-    <AppProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </AppProvider>
   );
 };
 

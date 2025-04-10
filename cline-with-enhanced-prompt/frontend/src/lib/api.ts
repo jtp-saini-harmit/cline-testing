@@ -44,8 +44,8 @@ export const fetchWishlist = async (userId: string) => {
   return response.data;
 };
 
-export const addToWishlist = async (userId: string, productId: string) => {
-  const response = await api.post(`/wishlist/${userId}/add`, { productId });
+export const addToWishlist = async (userId: string, product: { id: string; name: string; price: number; description: string }) => {
+  const response = await api.post(`/wishlist/${userId}/add`, product);
   return response.data;
 };
 
@@ -81,6 +81,11 @@ export const placeOrder = async (userId: string, items: any[], address: string, 
 
 export const getUserOrders = async (userId: string) => {
   const response = await api.get(`/orders/${userId}`);
+  return response.data;
+};
+
+export const resetLocalStorage = async () => {
+  const response = await api.post('/reset');
   return response.data;
 };
 

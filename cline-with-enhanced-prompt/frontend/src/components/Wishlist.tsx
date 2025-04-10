@@ -1,5 +1,5 @@
 import React from 'react';
-import { removeFromWishlist as apiRemoveFromWishlist } from '../lib/api';
+import { removeFromWishlist as apiRemoveFromWishlist, fetchWishlist as apiFetchWishlist } from '../lib/api';
 import { useAppContext } from '../lib/AppContext';
 
 interface WishlistItem {
@@ -10,15 +10,21 @@ interface WishlistItem {
 }
 
 const Wishlist: React.FC = () => {
-  const { isLoggedIn, user, wishlist, removeFromWishlist } = useAppContext();
+  const { isLoggedIn, user, wishlist, removeFromWishlist, setWishlist } = useAppContext();
 
   const handleRemoveItem = async (productId: string) => {
     if (!user) return;
     try {
-      await apiRemoveFromWishlist(user.id, productId);
+      // Update state first for immediate feedback
       removeFromWishlist(productId);
+      // Then sync with backend
+      await apiRemoveFromWishlist(user.id, productId);
     } catch (error) {
       console.error('Error removing wishlist item:', error);
+      alert('Failed to remove item from wishlist');
+      // Refresh wishlist state to restore the item
+      const updatedWishlist = await apiFetchWishlist(user.id);
+      setWishlist(updatedWishlist || []);
     }
   };
 

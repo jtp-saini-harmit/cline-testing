@@ -12,7 +12,7 @@ interface Product {
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const { isLoggedIn, user, cart, setCart, wishlist, setWishlist } = useAppContext();
+  const { isLoggedIn, user, addToCart: contextAddToCart, addToWishlist: contextAddToWishlist } = useAppContext();
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -34,7 +34,12 @@ const ProductList: React.FC = () => {
     }
     try {
       await addToCart(user.id, product.id, 1);
-      setCart([...cart, { ...product, quantity: 1 }]);
+      contextAddToCart({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1
+      });
       alert('Product added to cart successfully!');
     } catch (error) {
       console.error('Error adding product to cart:', error);
@@ -47,13 +52,23 @@ const ProductList: React.FC = () => {
       alert('Please log in to add items to your wishlist.');
       return;
     }
+    
+    const item = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      description: product.description
+    };
+    
     try {
-      await addToWishlist(user.id, product.id);
-      setWishlist([...wishlist, product]);
-      alert('Product added to wishlist successfully!');
+      // First update frontend state for immediate feedback
+      contextAddToWishlist(item);
+      
+      // Then update backend
+      await addToWishlist(user.id, item);
     } catch (error) {
       console.error('Error adding product to wishlist:', error);
-      alert('Failed to add product to wishlist. Please try again.');
+      alert('Failed to add product to wishlist');
     }
   };
 
