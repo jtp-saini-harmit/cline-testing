@@ -1,0 +1,35 @@
+# Project Configuration
+
+
+## Tech Stack
+- Next.js 14+ with App Router
+- Bootstrap/MUI CSS for styling
+- LocalStorage for database
+- NodeJS for backend
+
+
+## Project Structure
+/frontend
+  /src
+    /app         # Next.js App Router pages
+    /components  # React components
+    /lib         # Utility functions
+    /types       # TypeScript types
+  /public        # Static assets
+/backend         
+  /routes        # api routes
+  /controllers   # api functions with localstorage
+  main.js        # main server file
+
+
+## Development Workflow
+- Cline helps write and review code changes
+- Cline also fixes bugs and errors for best practices
+- Cline should complete the work with minimal tokens
+
+
+## Security
+DO NOT read or modify:
+- .env files
+- **/config/secrets.*
+- Any file containing API keys or credentials
