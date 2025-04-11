@@ -1,0 +1,18 @@
+# Project Configuration
+
+
+## Tech Stack
+- ReactJS for UI
+- MUI for styling
+- LocalStorage for database
+
+
+## Project Structure
+/app      
+compose.yaml
+
+
+## Development Workflow
+- Cline helps write and review code changes
+- Cline also fixes bugs and errors for best practices
+- Cline should complete the work with minimal tokens
